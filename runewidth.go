@@ -105,7 +105,7 @@ func (c *Condition) RuneWidth(r rune) int {
 			return 0
 		case r < 0x300:
 			return 1
-		case inTables(r, nonprint, combining, narrow):
+		case inTables(r, nonprint, combining):
 			return 0
 		case inTable(r, doublewidth):
 			return 2
@@ -114,7 +114,7 @@ func (c *Condition) RuneWidth(r rune) int {
 		}
 	} else {
 		switch {
-		case r < 0x20 || r > 0x10FFFF || inTables(r, nonprint, combining, narrow):
+		case r < 0x20 || r > 0x10FFFF || inTables(r, nonprint, combining):
 			return 0
 		case inTables(r, private, ambiguous, doublewidth):
 			return 2
