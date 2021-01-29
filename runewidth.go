@@ -96,7 +96,6 @@ func NewCondition() *Condition {
 // RuneWidth returns the number of cells in r.
 // See http://www.unicode.org/reports/tr11/
 func (c *Condition) RuneWidth(r rune) int {
-	// optimized version, verified by TestRuneWidthChecksums()
 	if !c.EastAsianWidth {
 		switch {
 		case r < 0x20 || r > 0x10FFFF:
