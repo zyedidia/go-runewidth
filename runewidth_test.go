@@ -65,6 +65,31 @@ func TestTableChecksums(t *testing.T) {
 	}
 }
 
+func TestRuneWidthChecksums(t *testing.T) {
+	var testcases = []struct {
+		name           string
+		eastAsianWidth bool
+		wantSHA        string
+	}{
+		{"ea-no", false, "88a092b8ab7cddcf189f30d96c4b0d747fdef52d1ee8bcb6de0adbe5ff2a9fe6"},
+		{"ea-yes", true, "e4ecd64af7fcc27369a7f128a0e7fdab7940fb293ad772713d3db757c4592662"},
+	}
+
+	for _, testcase := range testcases {
+		c := NewCondition()
+		c.EastAsianWidth = testcase.eastAsianWidth
+		buf := make([]byte, utf8.MaxRune+1)
+		for r := rune(0); r <= utf8.MaxRune; r++ {
+			buf[r] = byte(c.RuneWidth(r))
+		}
+		gotSHA := fmt.Sprintf("%x", sha256.Sum256(buf))
+		if gotSHA != testcase.wantSHA {
+			t.Errorf("TestRuneWidthChecksums = %s,\n\tsha256 = %s want %s",
+				testcase.name, gotSHA, testcase.wantSHA)
+		}
+	}
+}
+
 func checkInterval(first, last rune) bool {
 	return first >= 0 && first <= utf8.MaxRune &&
 		last >= 0 && last <= utf8.MaxRune &&
@@ -87,41 +112,6 @@ func isCompact(t *testing.T, ti *tableInfo) bool {
 	return true
 }
 
-// This is a utility function in case that a table has changed.
-func printCompactTable(tbl table) {
-	counter := 0
-	printEntry := func(first, last rune) {
-		if counter%3 == 0 {
-			fmt.Printf("\t")
-		}
-		fmt.Printf("{0x%04X, 0x%04X},", first, last)
-		if (counter+1)%3 == 0 {
-			fmt.Printf("\n")
-		} else {
-			fmt.Printf(" ")
-		}
-		counter++
-	}
-
-	sort.Sort(&tbl) // just in case
-	first := rune(-1)
-	for i := range tbl {
-		e := tbl[i]
-		if !checkInterval(e.first, e.last) { // sanity check
-			panic("invalid table")
-		}
-		if first < 0 {
-			first = e.first
-		}
-		if i+1 < len(tbl) && e.last+1 >= tbl[i+1].first { // can be combined into one entry
-			continue
-		}
-		printEntry(first, e.last)
-		first = -1
-	}
-	fmt.Printf("\n\n")
-}
-
 func TestSorted(t *testing.T) {
 	for _, ti := range tables {
 		if !sort.IsSorted(&ti.tbl) {
@@ -129,7 +119,6 @@ func TestSorted(t *testing.T) {
 		}
 		if !isCompact(t, &ti) {
 			t.Errorf("table not compact: %s", ti.name)
-			//printCompactTable(ti.tbl)
 		}
 	}
 }
