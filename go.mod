@@ -1,4 +1,4 @@
-module github.com/mattn/go-runewidth
+module github.com/zyedidia/go-runewidth
 
 go 1.9
 
